@@ -4,7 +4,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Settings, MCPClient, Message } from './types';
 import { GeminiResponseSchema } from './types';
-import { experimental_createMCPClient, stepCountIs } from 'ai';
+import { stepCountIs } from 'ai';
+import { createMCPClient } from '@ai-sdk/mcp';
 
 // Custom component to handle link clicks - opens in new tab
 const LinkComponent = ({ href, children }: { href?: string; children?: React.ReactNode }) => {
@@ -204,8 +205,7 @@ function ChatSidebar() {
 
             chrome.storage.local.set({
               composioSessionId: toolRouterSession.sessionId,
-              composioChatMcpUrl: toolRouterSession.chatSessionMcpUrl,
-              composioToolRouterMcpUrl: toolRouterSession.toolRouterMcpUrl,
+              composioMcpUrl: toolRouterSession.mcpUrl,
             });
           } catch (error) {
             console.error('Failed to initialize Composio:', error);
@@ -340,10 +340,9 @@ function ChatSidebar() {
           settings.composioApiKey
         );
         
-        chrome.storage.local.set({ 
+        chrome.storage.local.set({
           composioSessionId: toolRouterSession.sessionId,
-          composioChatMcpUrl: toolRouterSession.chatSessionMcpUrl,
-          composioToolRouterMcpUrl: toolRouterSession.toolRouterMcpUrl,
+          composioMcpUrl: toolRouterSession.mcpUrl,
         });
         
         console.log('New Composio session created');
@@ -456,27 +455,6 @@ GUIDELINES:
           systemInstruction: {
             parts: [{ text: systemInstruction }]
           },
-          generationConfig: {
-            temperature: 1.0,
-          },
-          safetySettings: [
-            {
-              category: 'HARM_CATEGORY_HARASSMENT',
-              threshold: 'BLOCK_NONE'
-            },
-            {
-              category: 'HARM_CATEGORY_HATE_SPEECH',
-              threshold: 'BLOCK_NONE'
-            },
-            {
-              category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-              threshold: 'BLOCK_NONE'
-            },
-            {
-              category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-              threshold: 'BLOCK_NONE'
-            }
-          ]
         };
         
         // Create abort controller with timeout
@@ -1261,22 +1239,17 @@ GUIDELINES:
         } else {
           mcpInitPromiseRef.current = (async () => {
             try {
-              const storage = await chrome.storage.local.get(['composioToolRouterMcpUrl', 'composioSessionId', 'atlasSettings']);
-              if (!storage.composioToolRouterMcpUrl || !storage.composioSessionId) return;
+              const storage = await chrome.storage.local.get(['composioMcpUrl', 'atlasSettings']);
+              if (!storage.composioMcpUrl) return;
 
-              const { StreamableHTTPClientTransport } = await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
               const composioApiKey = storage.atlasSettings?.composioApiKey;
 
-              const transportOptions: any = { sessionId: storage.composioSessionId };
-              if (composioApiKey) {
-                transportOptions.headers = { 'x-api-key': composioApiKey };
-              }
-
-              const mcpClient = await experimental_createMCPClient({
-                transport: new StreamableHTTPClientTransport(
-                  new URL(storage.composioToolRouterMcpUrl),
-                  transportOptions
-                ),
+              const mcpClient = await createMCPClient({
+                transport: {
+                  type: 'http',
+                  url: storage.composioMcpUrl,
+                  headers: composioApiKey ? { 'x-api-key': composioApiKey } : {},
+                },
               });
 
               const mcpTools = await mcpClient.tools();

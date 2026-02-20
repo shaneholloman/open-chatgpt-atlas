@@ -13,8 +13,7 @@ export interface Settings {
 
 export interface ComposioSession {
   sessionId: string;
-  chatSessionMcpUrl: string;
-  toolRouterMcpUrl: string;
+  mcpUrl: string;
   expiresAt: number;
   createdAt: number;
 }
@@ -95,7 +94,7 @@ export interface ToolResult {
 
 /**
  * MCP Client type for managing Model Context Protocol connections
- * Matches the AI SDK experimental_createMCPClient return type
+ * Matches the AI SDK createMCPClient return type
  */
 export interface MCPClient {
   tools(): Promise<Record<string, any>>;
@@ -200,8 +199,9 @@ export const GeminiResponseSchema = z.object({
  */
 export const ComposioSessionSchema = z.object({
   session_id: z.string().min(1),
-  chat_session_mcp_url: z.string().url(),
-  tool_router_instance_mcp_url: z.string().url(),
+  mcp: z.object({
+    url: z.string().url(),
+  }),
 });
 
 /**

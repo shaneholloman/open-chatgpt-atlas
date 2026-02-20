@@ -12,11 +12,10 @@
     "package": "vite build && electron-builder --mac"
   },
   "dependencies": {
-    "@ai-sdk/google": "^2.0.23",
-    "@ai-sdk/mcp": "^0.0.5",
-    "@composio/vercel": "^0.2.14",
+    "@ai-sdk/google": "^3.0.0",
+    "@ai-sdk/mcp": "^1.0.0",
     "@modelcontextprotocol/sdk": "^1.0.4",
-    "ai": "^5.0.76",
+    "ai": "^6.0.0",
     "electron-store": "^9.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
 import { BrowserManager } from './browser-manager';
 import type Store from 'electron-store';
-import { experimental_createMCPClient } from '@ai-sdk/mcp';
+import { createMCPClient } from '@ai-sdk/mcp';
 import { stepCountIs, streamText, ToolSet } from 'ai';
 import { google } from '@ai-sdk/google';
 import { ComputerUseService } from './computer-use-service';
@@ -117,19 +117,17 @@ async function initializeComposioMCP(apiKey: string): Promise<{
   toolCount: number;
 }> {
   try {
-    // Create Composio session
+    // Create Composio session via REST API
     const userId = `atlas-${randomUUID()}`;
     const sessionResponse = await fetch(
-      'https://backend.composio.dev/api/v3/labs/tool_router/session',
+      'https://backend.composio.dev/api/v3/tool_router/session',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': apiKey,
         },
-        body: JSON.stringify({
-          user_id: userId,
-        }),
+        body: JSON.stringify({ user_id: userId }),
       }
     );
 
@@ -141,14 +139,15 @@ async function initializeComposioMCP(apiKey: string): Promise<{
     }
 
     const sessionData = await sessionResponse.json();
-    const mcpUrl = sessionData.tool_router_instance_mcp_url;
     const sessionId = sessionData.session_id;
+    const mcpUrl = sessionData.mcp.url;
 
     // Create MCP client
-    const mcpClient = await experimental_createMCPClient({
+    const mcpClient = await createMCPClient({
       transport: {
         type: 'http',
         url: mcpUrl,
+        headers: { 'x-api-key': apiKey },
       },
     });
 

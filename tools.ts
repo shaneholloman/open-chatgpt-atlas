@@ -1,8 +1,3 @@
-// Composio Tool Router integration
-// Based on https://docs.composio.dev/docs/tool-router/quick-start
-//
-// Tool Router provides an MCP (Model Context Protocol) URL that the AI SDK uses to access tools.
-// We use Composio's REST API directly instead of the SDK to avoid Node.js dependencies.
 
 /**
  * Generates or retrieves a unique, persistent user ID for this extension installation
@@ -37,7 +32,7 @@ export async function initializeComposioToolRouter(apiKey: string, useUserId?: s
   try {
     const userId = useUserId || await getOrCreateUserId();
 
-    const response = await fetch('https://backend.composio.dev/api/v3/labs/tool_router/session', {
+    const response = await fetch('https://backend.composio.dev/api/v3/tool_router/session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -56,8 +51,7 @@ export async function initializeComposioToolRouter(apiKey: string, useUserId?: s
 
     return {
       sessionId: session.session_id,
-      chatSessionMcpUrl: session.chat_session_mcp_url,
-      toolRouterMcpUrl: session.tool_router_instance_mcp_url,
+      mcpUrl: session.mcp.url,
       expiresAt: sessionExpiresAt,
       createdAt: Date.now(),
     };
